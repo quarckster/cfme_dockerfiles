@@ -6,8 +6,9 @@ ENV SELENIUM_MAJOR_VERSION=3 \
     SELENIUM_HOME=/home/selenium \
     SELENIUM_PORT=4444 \
     VNC_PORT=5999 \
-    FIREFOX_VERSION=68.0esr \
+    FIREFOX_VERSION=60.8.0esr \
     GECKODRIVER_VERSION=v0.24.0 \
+    DEFAULT_PROFILE_NAME=mylovelyprofile \
     DISPLAY=:99
 
 ENV SELENIUM_VERSION=$SELENIUM_MAJOR_VERSION.$SELENIUM_MINOR_VERSION.$SELENIUM_PATCH_VERSION \
@@ -38,7 +39,9 @@ RUN CHROME_VERSION=$(rpm -q --qf "%{VERSION}\n" google-chrome-stable | sed -Ee '
 # firefox
 RUN curl -LO https://download-installer.cdn.mozilla.net/pub/firefox/releases/$FIREFOX_VERSION/linux-x86_64/en-US/firefox-$FIREFOX_VERSION.tar.bz2 && \
     tar -C . -xjvf firefox-$FIREFOX_VERSION.tar.bz2 && \
-    rm -f firefox-$FIREFOX_VERSION.tar.bz2
+    rm -f firefox-$FIREFOX_VERSION.tar.bz2 && \
+    firefox -headless -CreateProfile $DEFAULT_PROFILE_NAME && \
+    echo 'user_pref("app.update.enabled", false);' > $(find ~/.mozilla/firefox -name "*.$DEFAULT_PROFILE_NAME" -type d)/user.js
 
 # gecko for FF
 RUN curl -LO https://github.com/mozilla/geckodriver/releases/download/$GECKODRIVER_VERSION/geckodriver-$GECKODRIVER_VERSION-linux64.tar.gz && \

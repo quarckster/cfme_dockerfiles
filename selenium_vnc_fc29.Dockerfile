@@ -1,14 +1,17 @@
 FROM cfmeqe/sel_base_fc29
 
-ENV SELENIUM_VERSION=3.141.59 \
+ENV SELENIUM_MAJOR_VERSION=3 \
+    SELENIUM_MINOR_VERSION=141 \
+    SELENIUM_PATCH_VERSION=59 \
     SELENIUM_HOME=/home/selenium \
-    SELENIUM_PORT=4445 \
-    FIREFOX_VERSION=60.4.0esr \
-    GECKODRIVER_VERSION=v0.20.1 \
-    DEFAULT_PROFILE_NAME=mylovelyprofile \
+    SELENIUM_PORT=4444 \
+    VNC_PORT=5999 \
+    FIREFOX_VERSION=68.0esr \
+    GECKODRIVER_VERSION=v0.24.0 \
     DISPLAY=:99
 
-ENV SELENIUM_PATH=$SELENIUM_HOME/selenium-server/selenium-server-standalone.jar \
+ENV SELENIUM_VERSION=$SELENIUM_MAJOR_VERSION.$SELENIUM_MINOR_VERSION.$SELENIUM_PATCH_VERSION \
+    SELENIUM_PATH=$SELENIUM_HOME/selenium-server/selenium-server-standalone.jar \
     PATH=$SELENIUM_HOME/firefox:/opt/google/chrome:$PATH
 
 WORKDIR $SELENIUM_HOME
@@ -17,7 +20,7 @@ WORKDIR $SELENIUM_HOME
 EXPOSE $SELENIUM_PORT
 
 # vnc port
-EXPOSE 5999
+EXPOSE $VNC_PORT
 
 # chrome
 RUN curl -LO https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && \
@@ -35,9 +38,7 @@ RUN CHROME_VERSION=$(rpm -q --qf "%{VERSION}\n" google-chrome-stable | sed -Ee '
 # firefox
 RUN curl -LO https://download-installer.cdn.mozilla.net/pub/firefox/releases/$FIREFOX_VERSION/linux-x86_64/en-US/firefox-$FIREFOX_VERSION.tar.bz2 && \
     tar -C . -xjvf firefox-$FIREFOX_VERSION.tar.bz2 && \
-    rm -f firefox-$FIREFOX_VERSION.tar.bz2 && \
-    firefox -headless -CreateProfile $DEFAULT_PROFILE_NAME && \
-    echo 'user_pref("app.update.enabled", false);' > $(find ~/.mozilla/firefox -name "*.$DEFAULT_PROFILE_NAME" -type d)/user.js
+    rm -f firefox-$FIREFOX_VERSION.tar.bz2
 
 # gecko for FF
 RUN curl -LO https://github.com/mozilla/geckodriver/releases/download/$GECKODRIVER_VERSION/geckodriver-$GECKODRIVER_VERSION-linux64.tar.gz && \
@@ -45,7 +46,7 @@ RUN curl -LO https://github.com/mozilla/geckodriver/releases/download/$GECKODRIV
     rm -f geckodriver-$GECKODRIVER_VERSION-linux64.tar.gz
 
 # selenium server
-ADD http://selenium-release.storage.googleapis.com/3.141/selenium-server-standalone-$SELENIUM_VERSION.jar $SELENIUM_PATH
+ADD http://selenium-release.storage.googleapis.com/$SELENIUM_MAJOR_VERSION.$SELENIUM_MINOR_VERSION/selenium-server-standalone-$SELENIUM_VERSION.jar $SELENIUM_PATH
 
 # Add the xstartup file into the image and add config.
 COPY ./xstartup ./config .vnc/

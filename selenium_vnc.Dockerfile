@@ -1,4 +1,41 @@
-FROM cfmeqe/sel_base_fc29
+FROM registry.fedoraproject.org/fedora-minimal:30 AS sel_base
+
+ENV SELENIUM_HOME=/home/selenium
+
+WORKDIR $SELENIUM_HOME
+
+RUN microdnf -y update && \
+    microdnf install -y wget \
+                        vim \
+                        fluxbox \
+                        bzip2 \
+                        xterm \
+                        nano \
+                        net-tools \
+                        dbus-glib \
+                        gtk2 \
+                        java-1.8.0-openjdk \
+                        alsa-plugins-pulseaudio \
+                        libcurl \
+                        unzip \
+                        xdg-utils \
+                        redhat-lsb \
+                        gtk3 \
+                        tigervnc-server \
+                        dejavu-sans-fonts \
+                        dejavu-serif-fonts \
+                        liberation-fonts \
+                        libXScrnSaver \
+                        libappindicator-gtk3 \
+                        xdotool && \
+    microdnf clean all
+
+RUN touch $SELENIUM_HOME/.Xauthority && \
+    mkdir -p $SELENIUM_HOME/.cache/dconf && \
+    mkdir -p $SELENIUM_HOME/.mozilla/plugins
+
+
+FROM sel_base
 
 ENV SELENIUM_MAJOR_VERSION=3 \
     SELENIUM_MINOR_VERSION=141 \
@@ -9,7 +46,8 @@ ENV SELENIUM_MAJOR_VERSION=3 \
     FIREFOX_VERSION=60.8.0esr \
     GECKODRIVER_VERSION=v0.24.0 \
     DEFAULT_PROFILE_NAME=mylovelyprofile \
-    DISPLAY=:99
+    DISPLAY=:99 \
+    HOME=$SELENIUM_HOME
 
 ENV SELENIUM_VERSION=$SELENIUM_MAJOR_VERSION.$SELENIUM_MINOR_VERSION.$SELENIUM_PATCH_VERSION \
     SELENIUM_PATH=$SELENIUM_HOME/selenium-server/selenium-server-standalone.jar \
@@ -25,7 +63,7 @@ EXPOSE $VNC_PORT
 
 # chrome
 RUN curl -LO https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && \
-    dnf install -y google-chrome-stable_current_x86_64.rpm && \
+    rpm -i google-chrome-stable_current_x86_64.rpm && \
     rm -f google-chrome-stable_current_x86_64.rpm
 
 # chrome and chrome driver versions should match in order to avoid incompatibility
@@ -54,13 +92,11 @@ ADD http://selenium-release.storage.googleapis.com/$SELENIUM_MAJOR_VERSION.$SELE
 # Add the xstartup file into the image and add config.
 COPY ./xstartup ./config .vnc/
 
-# Create required dirs and files, change permissions in order to work in openshift
-RUN touch $SELENIUM_HOME/.Xauthority && \
-    mkdir -p $SELENIUM_HOME/.cache/dconf && \
-    chgrp -R 0 $SELENIUM_HOME && \
+# change permissions in order to work in openshift
+RUN chgrp -R 0 $SELENIUM_HOME && \
     chmod -R g=u $SELENIUM_HOME && \
     chmod a+x $SELENIUM_HOME/.vnc/xstartup
 
 USER 1001
 
-ENTRYPOINT HOME=$SELENIUM_HOME vncserver $DISPLAY -fg -Log *:stderr:100
+ENTRYPOINT vncserver $DISPLAY -fg -Log *:stderr:100

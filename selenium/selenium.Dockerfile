@@ -1,41 +1,4 @@
-FROM registry.fedoraproject.org/fedora-minimal:30 AS sel_base
-
-ENV SELENIUM_HOME=/home/selenium
-
-WORKDIR $SELENIUM_HOME
-
-RUN microdnf -y update && \
-    microdnf install -y wget \
-                        vim \
-                        fluxbox \
-                        bzip2 \
-                        xterm \
-                        nano \
-                        net-tools \
-                        dbus-glib \
-                        gtk2 \
-                        java-1.8.0-openjdk \
-                        alsa-plugins-pulseaudio \
-                        libcurl \
-                        unzip \
-                        xdg-utils \
-                        redhat-lsb \
-                        gtk3 \
-                        tigervnc-server \
-                        dejavu-sans-fonts \
-                        dejavu-serif-fonts \
-                        liberation-fonts \
-                        libXScrnSaver \
-                        libappindicator-gtk3 \
-                        xdotool && \
-    microdnf clean all
-
-RUN touch $SELENIUM_HOME/.Xauthority && \
-    mkdir -p $SELENIUM_HOME/.cache/dconf && \
-    mkdir -p $SELENIUM_HOME/.mozilla/plugins
-
-
-FROM sel_base
+FROM quay.io/redhatqe/selenium-base:openshift
 
 ENV SELENIUM_MAJOR_VERSION=3 \
     SELENIUM_MINOR_VERSION=141 \
